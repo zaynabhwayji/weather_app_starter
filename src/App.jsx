@@ -1,35 +1,68 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import Search from "./components/Search";
+import CurrentWeather from "./components/CurrentWeather";
+import HourlyForecast from "./components/HourlyForecast";
+import './index.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+function WeatherApp() {
+  // State to store weather data from API
+  const [data, setData] = useState(null);
+  // State to handle loading status (true while fetching data)
+  const [loading, setLoading] = useState(false);
+  // State to store error messages
+  const [error, setError] = useState("");
+  // API key from .env file (Vite uses import.meta.env)
+  const API_KEY = import.meta.env.VITE_API_KEY;
+  // Function to fetch weather data based on city name
+  const fetchWeather = async (city) => {
+    try {
+      // Start loading
+      setLoading(true);
+
+      setError("");
+      // Fetch data from OpenWeather API
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&cnt=8&appid=${API_KEY}`
+      );
+      // If response is not OK (e.g. city not found)
+      if (!res.ok) {
+        throw new Error("City not found");
+      }
+      // Convert response to JSON
+      const result = await res.json();
+
+      console.log(result);
+      // Save data to state
+      setData(result);
+      // Stop loading
+      setLoading(false);
+    } catch (error) {
+      // Handle errors
+      setError(error.message);
+      // Clear old data
+      setData(null);
+      // Stop loading even if error happens
+      setLoading(false);
+    }
+  };
+
+
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {/* Search Box */}
+      <Search onSearch={fetchWeather} />
+
+      {loading && <p>Loading...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {/* Weather Results */}
+      <CurrentWeather data={data} />
+      <HourlyForecast data={data} />
+
     </>
-  )
+
+  );
 }
 
-export default App
+export default WeatherApp;
