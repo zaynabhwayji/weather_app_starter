@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Search from "./components/Search";
 import CurrentWeather from "./components/CurrentWeather";
 import HourlyForecast from "./components/HourlyForecast";
@@ -11,47 +11,42 @@ function WeatherApp() {
   const [loading, setLoading] = useState(false);
   // State to store error messages
   const [error, setError] = useState("");
-  // API key from .env file (Vite uses import.meta.env)
+  const [city,setCity]=useState("london")  // API key from .env file (Vite uses import.meta.env)
   const API_KEY = import.meta.env.VITE_API_KEY;
-  // Function to fetch weather data based on city name
-  const fetchWeather = async (city) => {
-    try {
-      // Start loading
-      setLoading(true);
+ const fetchWeather = async () => {
+  try {
+    setLoading(true);
+    setError("");
 
-      setError("");
-      // Fetch data from OpenWeather API
-      const res = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&cnt=8&appid=${API_KEY}`
-      );
-      // If response is not OK (e.g. city not found)
-      if (!res.ok) {
-        throw new Error("City not found");
-      }
-      // Convert response to JSON
-      const result = await res.json();
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&cnt=8&appid=${API_KEY}`);
 
-      console.log(result);
-      // Save data to state
-      setData(result);
-      // Stop loading
-      setLoading(false);
-    } catch (error) {
-      // Handle errors
-      setError(error.message);
-      // Clear old data
-      setData(null);
-      // Stop loading even if error happens
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error("City not found");
     }
-  };
+
+    const result = await res.json();
+    setData(result);
+  } catch (error) {
+    setError(error.message);
+    setData(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+  fetchWeather();
+}, [city]);
+  // Function to fetch weather data based on city name
+
 
 
 
   return (
     <>
       {/* Search Box */}
-      <Search onSearch={fetchWeather} />
+      <Search setCity={setCity} city={city} />
 
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
